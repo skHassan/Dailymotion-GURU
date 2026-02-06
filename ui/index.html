@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dailymotion Expert Agent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #171a2e;
+      --text: #e8e9f0;
+      --muted: #a1a3b8;
+      --accent: #5eead4;
+      --danger: #f87171;
+      --warning: #fbbf24;
+      --success: #34d399;
+      --border: #2a2e4a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(1200px 600px at top, #1a1d3a, var(--bg));
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 720px;
+      background: linear-gradient(180deg, #1b1f3b, var(--card));
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      padding: 24px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    select {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 90px;
+      resize: vertical;
+      background: #0d1025;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    textarea:focus,
+    select:focus,
+    button:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(94,234,212,0.2);
+    }
+    /* Code block container */
+    pre {
+      background: #0b0e1f;          /* dark grey / blue */
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 14px 0;
+      overflow-x: auto;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+    }
+
+    /* Code text */
+    pre code {
+      display: block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #e5e7eb;               /* light text */
+      white-space: pre;
+    }
+
+    /* Inline code */
+    code:not(pre code) {
+      background: rgba(255,255,255,0.08);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.85em;
+      color: #a7f3d0;
+    }
+
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--accent), #38bdf8);
+      color: #062c2a;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(94,234,212,0.3);
+    }
+
+    .response {
+      margin-top: 20px;
+      padding: 16px;
+      background: #0d1025;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .confidence {
+      margin-top: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .high { color: var(--success); }
+    .low { color: var(--danger); }
+    .clarification { color: var(--warning); }
+
+    .sources {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .sources a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .sources a:hover {
+      text-decoration: underline;
+    }
+
+
+    ul {
+      padding-left: 18px;
+      margin: 6px 0 0;
+    }
+
+    footer {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app" role="application">
+    <header>
+      <h1>Dailymotion Expert Agent</h1>
+      <select id="mode" aria-label="Answer style">
+        <option value="developer">Developer</option>
+        <option value="non_developer">Non-developer</option>
+      </select>
+    </header>
+
+    <label for="question" class="sr-only">Ask a question</label>
+    <textarea
+      id="question"
+      placeholder="Ask a question about Dailymotion documentation…"
+      aria-label="Question input"
+    ></textarea>
+
+    <div class="actions">
+      <span id="status" aria-live="polite" style="font-size:0.85rem;color:var(--muted);"></span>
+      <button onclick="ask()">Ask</button>
+    </div>
+
+    <section
+      id="result"
+      class="response"
+      style="display:none;"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <div id="answerText"></div>
+      <div id="confidence" class="confidence"></div>
+      <div id="sources" class="sources"></div>
+    </section>
+
+    <footer>
+      Powered by AI · Grounded in official documentation
+    </footer>
+  </main>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+const DOC_BASE_URL = "https://developers.dailymotion.com/docs/";
+
+const SOURCE_MAP = {
+  "docs authenticate": "authenticate",
+  "docs authenticate using client credentials": "authenticate-using-client-credentials",
+  "docs authenticate using password grant type": "authenticate-using-password-grant-type",
+  "docs authenticate using authorization codes": "authenticate-using-authorization-codes",
+
+  "docs edit video metadata": "edit-video-metadata",
+  "docs generate stream urls": "generate-stream-urls",
+  "docs record your live event": "record-your-live-event",
+  "docs retrieve player state web": "retrieve-player-state-web",
+
+  // fallback handled below
+};
+</script>
+
+<script>
+let pendingQuestion = null;
+
+async function ask() {
+  const questionEl = document.getElementById("question");
+  const statusEl = document.getElementById("status");
+  const question = questionEl.value.trim();
+  const mode = document.getElementById("mode").value;
+
+  if (!question) return;
+
+  statusEl.textContent = "Thinking…";
+
+  const payload = { question, mode };
+  if (pendingQuestion) payload.pending_question = pendingQuestion;
+
+  const res = await fetch("http://127.0.0.1:8000/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+
+  document.getElementById("result").style.display = "block";
+  document.getElementById("answerText").innerHTML = marked.parse(data.answer);
+
+  const confidenceEl = document.getElementById("confidence");
+  confidenceEl.textContent = "Confidence: " + data.confidence;
+  confidenceEl.className = "confidence " + data.confidence;
+
+  const sourcesEl = document.getElementById("sources");
+  if (data.sources && data.sources.length) {
+    sourcesEl.innerHTML = "<strong>Sources:</strong><ul>" +
+    data.sources.map(src => {
+      const normalized = src
+        .toLowerCase()
+        .replace(/-/g, " ")
+        .trim();
+
+      const slug = SOURCE_MAP[normalized] || null;
+      const url = slug
+        ? DOC_BASE_URL + slug
+        : DOC_BASE_URL;
+
+      console.log(src, normalized, slug, url);
+
+      return `<li>
+        <a href="${url}" target="_blank" rel="noopener noreferrer">
+          ${src}
+        </a>
+      </li>`;
+    }).join("") +
+    "</ul>";
+
+
+  } else {
+    sourcesEl.innerHTML = "";
+  }
+
+  if (data.confidence === "clarification" && data.pending_question) {
+    pendingQuestion = data.pending_question;
+    questionEl.value = "";
+    questionEl.placeholder = "Please clarify…";
+  } else {
+    pendingQuestion = null;
+    questionEl.value = "";
+    questionEl.placeholder = "Ask a question about Dailymotion documentation…";
+  }
+
+  statusEl.textContent = "";
+}
+</script>
+</body>
+</html>
